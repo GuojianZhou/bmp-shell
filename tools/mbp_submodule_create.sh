@@ -3,15 +3,15 @@ branch="master"
 cd ../
 TOP_DIR=`pwd`
 BSP_NAME=`basename $TOP_DIR`
+MBP_SCRIPTS_URL="git://pek-lpdfs01.wrs.com/managed_builds/Pulsar/MBP/New/mbp-scripts.git"
 
 function clone_extern_git()
 {
     #git clone ../mbp
     git clone --bare /git/managed_builds/Pulsar/SRC/Pulsar8/meta-smartpm-secure meta-smartpm-secure 
-    git clone --bare git://pek-lpdfs01.wrs.com/managed_builds/Pulsar/MBP/New/mbp-scripts.git scripts
+    #git clone --bare git://pek-lpdfs01.wrs.com/managed_builds/Pulsar/MBP/New/mbp-scripts.git scripts
 }
 
-#
 function create_default_conf_link()
 {
     git clone scripts scripts.tmp
@@ -66,21 +66,13 @@ submodule_git()
 {
     cd mbp
     git submodule init --bare
-    for each in buildhistory deploy sstate-cache tmp prdb downloads src meta-smartpm-secure scripts; do
+    for each in buildhistory deploy sstate-cache tmp prdb downloads src meta-smartpm-secure; do
        if [ ! -e $each/.git ]; then
-           #mkdir -p $each && (cd $each && git init && touch .empty && git add .empty && git commit -s -m "$each: Initial Commit" && git checkout -B $branch)
-           #git submodule add ../$BSP_NAME/$each
            git submodule add ../$each
-           #git submodule add ./$each
        fi
        rm -fr $each
     done
-    #cat .gitmodules
-    #echo "sed -i 's/$BSP_NAME\///g' .gitmodules"
-    #sed -e "s/${BSP_NAME}\///g" .gitmodules
-    #sed -i "s/${BSP_NAME}\///g" .gitmodules
-    ##sed -i 's/intel-x86\///g' .gitmodules
-    #cat .gitmodules
+    git submodule add $MBP_SCRIPTS_URL scripts
 }
 
 clone_extern_git
@@ -96,5 +88,3 @@ git commit -s -m "mbp: $BSP_NAME submodules Initial Commit"
 
 cd ..
 git clone --bare mbp
-##replace the ../$BSP_NAME in the .gitmodules
-##
