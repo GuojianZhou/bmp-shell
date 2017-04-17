@@ -46,7 +46,7 @@ function create_default_conf_link()
         else
             echo "SKIP: conf/default.conf link exist!" && return 0
         fi
-        if [ ! -f conf/default.conf ]; then
+        if [ ! -L conf/default.conf ]; then
             echo "ERROR: Link the default.conf.$BSP_NAME to default.conf Failure!"  && exit 1
         fi
         git add conf
