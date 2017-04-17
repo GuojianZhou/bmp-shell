@@ -3,7 +3,27 @@ branch="master"
 cd ../
 TOP_DIR=`pwd`
 BSP_NAME=`basename $TOP_DIR`
+BRANCH="master"
 MBP_SCRIPTS_URL="git://pek-lpdfs01.wrs.com/managed_builds/Pulsar/MBP/New/mbp-scripts.git"
+
+usage() {
+    echo >&2 "usage: ${0##*/} [-b <#branch> ] [-n <#bsp-name>] [-h] [?] "
+    echo >&2 "   -b specifies the branch name."
+    echo >&2 "   -n specifies the bsp name."
+    echo >&2 "   -h Print this help menu"
+    echo >&2 "   ?  Print this help menu"
+}
+
+while getopts "b:n:?h" FLAG; do
+    case $FLAG in
+        b)      BRANCH=$OPTARG;;
+        n)      BSP_NAME=$OPTARG;;
+        h)      usage;;
+        \?)     usage;;
+    esac
+done
+
+shift $((OPTIND - 1))
 
 function clone_extern_git()
 {
@@ -14,22 +34,22 @@ function clone_extern_git()
 
 function create_default_conf_link()
 {
-    git clone scripts scripts.tmp
-    cd scripts.tmp
-    if [ -f conf/default.conf.$BSP_NAME ]; then
-        cd conf
-        if [ -f default.conf ]; then
-            rm -f default.conf
+    cd $TOP_DIR/mbp
+    git clone $MBP_SCRIPTS_URL scripts
+    if [ -f scripts/conf/default.conf.$BSP_NAME ]; then
+        if [ ! -f conf/default.conf ]; then
+            if [ ! -d conf ]; then
+                mkdir conf
+            fi
+            ln -sf scripts/conf/default.conf.$BSP_NAME conf/default.conf
+        else
+            echo "SKIP: conf/default.conf link exist!" && return 0
         fi
-        ln -sf default.conf.$BSP_NAME default.conf
-        if [ ! -f default.conf ]; then
+        if [ ! -f conf/default.conf ]; then
             echo "ERROR: Link the default.conf.$BSP_NAME to default.conf Failure!"  && exit 1
         fi
-        git add default.conf
-        git commit -s -m "mbp: $BSP_NAME submodules Initial Commit"
-        git push
-        cd ..
-        rm -fr scripts.tmp
+        git add conf
+        git add conf/default.conf
     else
         echo "ERROR: Could not find the valid scripts/default.conf.$BSP_NAME file, Exiting" && exit 2
     fi
@@ -64,7 +84,7 @@ bare_git_init_create ()
 
 submodule_git()
 {
-    cd mbp
+    cd $TOP_DIR/mbp
     git submodule init --bare
     for each in buildhistory deploy sstate-cache tmp prdb downloads src meta-smartpm-secure; do
        if [ ! -e $each/.git ]; then
@@ -76,12 +96,12 @@ submodule_git()
 }
 
 clone_extern_git
-create_default_conf_link
 bare_git_create
 bare_git_init_create
 
-cd mbp
 submodule_git
+create_default_conf_link
+cd $TOP_DIR/mbp
 git add .gitmodules
 
 git commit -s -m "mbp: $BSP_NAME submodules Initial Commit"
