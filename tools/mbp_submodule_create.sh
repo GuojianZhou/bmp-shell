@@ -41,7 +41,8 @@ function create_default_conf_link()
             if [ ! -d conf ]; then
                 mkdir conf
             fi
-            ln -sf scripts/conf/default.conf.$BSP_NAME conf/default.conf
+            ln -sf ../scripts/conf/default.conf.$BSP_NAME conf/default.conf
+            rm -fr scripts
         else
             echo "SKIP: conf/default.conf link exist!" && return 0
         fi
@@ -88,11 +89,15 @@ submodule_git()
     git submodule init --bare
     for each in buildhistory deploy sstate-cache tmp prdb downloads src meta-smartpm-secure; do
        if [ ! -e $each/.git ]; then
-           git submodule add ../$each
+           git submodule add ../${BSP_NAME}/$each
        fi
        rm -fr $each
     done
+    echo "sed -i 's/$BSP_NAME\///g' .gitmodules"
+    sed -i "s/${BSP_NAME}\///g" .gitmodules
+    #cat .gitmodules
     git submodule add $MBP_SCRIPTS_URL scripts
+    rm -fr scripts
 }
 
 clone_extern_git
