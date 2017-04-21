@@ -107,7 +107,7 @@ bare_git_init_create ()
 submodule_git()
 {
     cd $TOP_DIR/mbp
-    git submodule init --bare
+    git submodule init
     for each in buildhistory deploy sstate-cache tmp prdb downloads src; do
        if [ ! -e $each/.git ]; then
            git submodule add ../${BSP_NAME}/$each
