@@ -107,15 +107,16 @@ bare_git_init_create ()
 submodule_git()
 {
     cd $TOP_DIR/mbp
+    git remote set-url origin $PWD
     git submodule init
     for each in buildhistory deploy sstate-cache tmp prdb downloads src; do
        if [ ! -e $each/.git ]; then
-           git submodule add ../${BSP_NAME}/$each
+           git submodule add ../$each
        fi
        rm -fr $each
     done
-    echo "sed -i 's/$BSP_NAME\///g' .gitmodules"
-    sed -i "s/${BSP_NAME}\///g" .gitmodules
+    #echo "sed -i 's/$BSP_NAME\///g' .gitmodules"
+    #sed -i "s/${BSP_NAME}\///g" .gitmodules
     #cat .gitmodules
     git submodule add $MBP_SCRIPTS_URL scripts
     rm -fr scripts
