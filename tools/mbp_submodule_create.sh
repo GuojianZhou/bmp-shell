@@ -28,7 +28,7 @@ done
 shift $((OPTIND - 1))
 
 
-function prepare_creste_git()
+function prepare_create_git()
 {
     if [ X"$BSP_NAME" != X"$BSP_NAME_DEFAULT" ]; then
         echo "Create the whole MBP in $BSP_NAME directory!"
@@ -125,7 +125,7 @@ submodule_git()
 }
 
 if [ X"$BSP_NAME" != X"" -a X"$BSP_NAME" != X"$BSP_NAME_DEFAULT" ];then
-    prepare_creste_git
+    prepare_create_git
     cd $TOP_DIR/$BSP_NAME
     TOP_DIR=`pwd`
 fi
