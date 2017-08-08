@@ -1,0 +1,78 @@
+From 5ded2283ffbd4ec70c6ac401b3f264aa554a58ad Mon Sep 17 00:00:00 2001
+From: fli <fupan.li@windriver.com>
+Date: Sat, 21 Jan 2017 19:28:37 -0800
+Subject: [PATCH] bitbake: add a trigger to disable the dependency on other
+ bb's task when caculating stamp hash
+
+We didn't want the task's checksum depends on the dependency of other
+bb files, thus add two variables to disable or enable this option:
+
+BB_HASHDEP_WHITELIST = "(.*\..*:gcc-source.*\..*|.*\.do_rootfs:.*\..*)"
+BB_HASHDEP_DISABLE = "1"
+
+Signed-off-by: fli <fupan.li@windriver.com>
+---
+ lib/bb/runqueue.py |  2 ++
+ lib/bb/siggen.py   | 19 +++++++++++++++++++
+ 2 files changed, 21 insertions(+)
+
+diff --git a/lib/bb/runqueue.py b/lib/bb/runqueue.py
+index e1a15af2..521c6c27 100644
+--- a/lib/bb/runqueue.py
++++ b/lib/bb/runqueue.py
+@@ -1239,6 +1239,8 @@ class RunQueue:
+         for dep in self.rqdata.runtaskentries[tid].depends:
+             if iscurrent:
+                 (mc2, fn2, taskname2, taskfn2) = split_tid_mcfn(dep)
++                if fn != fn2:
++                    continue
+                 stampfile2 = bb.build.stampfile(taskname2, self.rqdata.dataCaches[mc2], taskfn2)
+                 stampfile3 = bb.build.stampfile(taskname2 + "_setscene", self.rqdata.dataCaches[mc2], taskfn2)
+                 t2 = get_timestamp(stampfile2)
+diff --git a/lib/bb/siggen.py b/lib/bb/siggen.py
+index f71190ad..726d5bff 100644
+--- a/lib/bb/siggen.py
++++ b/lib/bb/siggen.py
+@@ -84,6 +84,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
+         self.gendeps = {}
+         self.lookupcache = {}
+         self.pkgnameextract = re.compile("(?P<fn>.*)\..*")
++        self.tasknameextract = re.compile('do_[a-z].*$')
+         self.basewhitelist = set((data.getVar("BB_HASHBASE_WHITELIST") or "").split())
+         self.taskwhitelist = None
+         self.init_rundepcheck(data)
+@@ -94,6 +95,13 @@ class SignatureGeneratorBasic(SignatureGenerator):
+         else:
+             self.checksum_cache = None
+ 
++        self.depwhitelist = data.getVar("BB_HASHDEP_WHITELIST", True) or None
++        self.disdepsign = data.getVar("BB_HASHDEP_DISABLE", True) or 0
++        if self.depwhitelist:
++            self.dwl = re.compile(self.depwhitelist)
++        else:
++            self.dwl = None
++
+     def init_rundepcheck(self, data):
+         self.taskwhitelist = data.getVar("BB_HASHTASK_WHITELIST") or None
+         if self.taskwhitelist:
+@@ -200,6 +208,17 @@ class SignatureGeneratorBasic(SignatureGenerator):
+             depname = dataCache.pkg_fn[self.pkgnameextract.search(dep).group('fn')]
+             if not self.rundep_check(fn, recipename, task, dep, depname, dataCache):
+                 continue
++            #we only deal with the task deps of recipename equals to depname,
++            #except those listed in the BB_HASHDEP_WHITELIST when set BB_HASHDEP_DISABLE
++            if self.disdepsign and recipename != depname:
++                deptask = self.tasknameextract.search(dep).group()
++                if not deptask:
++                    bb.fatal("cannot extract the task name from %s", dep)
++                if self.dwl and self.dwl.search(recipename + '\.' + task + ':' + depname + '\.' + deptask):
++                    pass
++                else:
++                    continue
++     
+             if dep not in self.taskhash:
+                 bb.fatal("%s is not in taskhash, caller isn't calling in dependency order?", dep)
+             data = data + self.taskhash[dep]
+-- 
+2.11.0
+
