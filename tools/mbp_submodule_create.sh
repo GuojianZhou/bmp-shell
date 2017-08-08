@@ -48,8 +48,8 @@ function prepare_create_git()
 
 function clone_extern_git()
 {
+    echo "clone_extern_git"
     #git clone ../mbp
-    git clone --bare /git/managed_builds/Pulsar/SRC/Pulsar8/meta-smartpm-secure meta-smartpm-secure 
     #git clone --bare git://pek-lpdfs01.wrs.com/managed_builds/Pulsar/MBP/New/mbp-scripts.git scripts
 }
 
@@ -120,8 +120,9 @@ submodule_git()
     #cat .gitmodules
     git submodule add $MBP_SCRIPTS_URL scripts
     rm -fr scripts
-    git submodule add $SMARTPM_SECURE_URL meta-smartpm-secure
-    rm -fr meta-smartpm-secure
+    #P9 will not support smartpm, so remove this layer from mbp
+    #git submodule add $SMARTPM_SECURE_URL meta-smartpm-secure
+    #rm -fr meta-smartpm-secure
 }
 
 if [ X"$BSP_NAME" != X"" -a X"$BSP_NAME" != X"$BSP_NAME_DEFAULT" ];then
