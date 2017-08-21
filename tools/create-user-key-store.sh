@@ -5,6 +5,7 @@ _D=`dirname "$_S"`
 ROOT_DIR="`cd "$_D" && pwd`"
 
 KEYS_DIR="$ROOT_DIR/user-keys"
+pass_phrase="SecureCore"
 
 function show_help()
 {
@@ -19,6 +20,10 @@ Options:
  -d <dir>
     Set the path to save the generated user keys.
     Default: `pwd`/user-keys
+
+ -p <pass_phrase>
+    Input the user key pass phrase.
+    Default: "SecureCore"
 
  -h|--help
     Show this help information.
@@ -61,6 +66,9 @@ while [ $# -gt 0 ]; do
     case $opt in
         -d)
             shift && KEYS_DIR="$1"
+            ;;
+        -p)
+            shift && pass_phrase="$1"
             ;;
         -h|--help)
             show_help `basename $0`
@@ -113,12 +121,31 @@ ca_sign() {
                 -out "$key_dir/$key_name.csr"
         else
             # Prompt user to type the password
-            openssl genrsa -des3 -out "$key_dir/$key_name.key" 2048
-
-            openssl req -new -sha256 \
+	    expect <<- END
+            spawn openssl genrsa -des3 -out "$key_dir/$key_name.key" 2048
+            expect {
+                    "Enter pass phrase for" {send "$pass_phrase\r"}
+                   }
+            sleep 2
+            expect {
+                    "Verifying - Enter pass phrase for" {send "$pass_phrase\r"; puts "Verify sign $pass_phrase OK\n"}
+                   }
+            sleep 1
+            spawn openssl req -new -sha256 \
                 -subj "$subject" \
                 -key "$key_dir/$key_name.key" \
                 -out "$key_dir/$key_name.csr"
+
+            expect {
+                    "Enter pass phrase for" {send "$pass_phrase\r"}
+                   }
+            sleep 1
+            expect {
+                    "Signature ok" {puts "Signature OK\n"}
+                   }
+            sleep 1
+            exit
+END
         fi
 
         local ca_cert="$ca_key_dir/$ca_key_name.crt"
