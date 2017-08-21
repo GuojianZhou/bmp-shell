@@ -7,19 +7,25 @@ BSP_NAME=""
 BRANCH="master"
 MBP_SCRIPTS_URL="git://pek-lpdfs01.wrs.com/managed_builds/Pulsar/MBP/New/mbp-scripts.git"
 SMARTPM_SECURE_URL="git://pek-lpdfs01.wrs.com/managed_builds/Pulsar/SRC/Pulsar8/meta-smartpm-secure"
+ima_fsk_passphrase=""
+rpm_gpg_passphrase=""
 
 usage() {
     echo >&2 "usage: ${0##*/} [-b <#branch> ] [-n <#bsp-name>] [-h] [?] "
     echo >&2 "   -b specifies the branch name."
     echo >&2 "   -n specifies the bsp name."
+    echo >&2 "   -i specifies the IMA FSK user key passphrase."
+    echo >&2 "   -r specifies the RPM GPG user key passphrase."
     echo >&2 "   -h Print this help menu"
     echo >&2 "   ?  Print this help menu"
 }
 
-while getopts "b:n:?h" FLAG; do
+while getopts "b:n:i:r:?h" FLAG; do
     case $FLAG in
         b)      BRANCH=$OPTARG;;
         n)      BSP_NAME=$OPTARG;;
+        i)      ima_fsk_passphrase=$OPTARG;;
+        r)      rpm_gpg_passphrase=$OPTARG;;
         h)      usage;;
         \?)     usage;;
     esac
@@ -75,6 +81,69 @@ function create_default_conf_link()
     else
         echo "ERROR: Could not find the valid scripts/default.conf.$BSP_NAME file, Exiting" && exit 2
     fi
+}
+
+function create_user_keys_passphrase()
+{
+    cd $TOP_DIR/mbp
+    git clone $MBP_SCRIPTS_URL scripts
+    if [ -f conf/default.conf ]; then
+	ENCRYPTO_FLAG=`grep ENCRYPTO_FLAG conf/default.conf | awk -F= '{print $2}'`
+    fi
+    if [ X"$ENCRYPTO_FLAG" == X"1" ]; then
+	echo "[Note]: mbp will create the user keys pass phrase!"
+        if [ ! -f conf/UK-PS ]; then
+	    if [ X"$ima_fsk_passphrase" == X"" ]; then
+                while true; do
+                    echo -e "\033[31m"
+                    read -p " [Note]: Do you wish to create the IMA File SIGN KEY passphrase or Sample, S|s/pass phrase?" fsk
+                    case $fsk in
+                        [Ss]) echo -e "\033[31m [NOTE]: Use the default Sample Key!\033[0m";
+	            	  echo SIGNING_MODEL = \"sample\" > conf/UK-PS;
+	            	  echo RPM_FSK_PASSWORD = \"password\" >> conf/UK-PS;
+                          echo RPM_GPG_PASSPHRASE = \"SecureCore\" >> conf/UK-PS;
+	            	  break;;
+                        *   ) echo -e "\033[31m [NOTE]: Use key Pass Phrase is $fsk !!\033[0m";
+	            	  echo SIGNING_MODEL = \"user\" > conf/UK-PS;
+	            	  echo RPM_FSK_PASSWORD = \"$fsk\" >> conf/UK-PS;
+	            	  if [ X"$rpm_gpg_passphrase" == X"" ]
+                              read -p " [Note]: Do you wish to create the RPM GPG KEY passphrase?" gpgk
+                              echo RPM_GPG_PASSPHRASE = \"$gpgk\" >> conf/UK-PS;
+	            	  else
+                              echo RPM_GPG_PASSPHRASE = \"$rpm_gpg_passphrase\" >> conf/UK-PS;
+	                  fi
+	            	  break;;
+                    esac
+                    echo -e "\033[0m"
+                done
+	    else
+		echo SIGNING_MODEL = \"user\" > conf/UK-PS;
+	        echo RPM_FSK_PASSWORD = \"$ima_fsk_passphrase\" >> conf/UK-PS;
+	        if [ X"$rpm_gpg_passphrase" == X"" ]
+                    echo -e "\033[31m"
+                    read -p " [Note]: Do you wish to create the RPM GPG KEY passphrase?" gpgk
+                    echo RPM_GPG_PASSPHRASE = \"$gpgk\" >> conf/UK-PS;
+                    echo -e "\033[0m"
+	        else
+                    echo RPM_GPG_PASSPHRASE = \"$rpm_gpg_passphrase\" >> conf/UK-PS;
+	        fi
+
+	    fi
+        else
+            echo "[Note]: The UK-PS file has been created!" 
+        fi
+    fi
+    if [ -f conf/UK-PS ];then
+        git add conf/UK-PS
+    else
+	if [ X"$ENCRYPTO_FLAG" == X"1" ]; then
+            echo "[Error]: There is no UK-PS file for the Secure Encrypto Feature!!"
+	    exit 1
+	else
+	    echo "[Note]: This BSP is not support the Secure Encrypto Feature!!"
+	fi
+    fi
+    rm -fr scripts
 }
 
 function bare_git_create ()
@@ -141,6 +210,7 @@ bare_git_init_create
 
 submodule_git
 create_default_conf_link
+create_user_keys_passphrase
 cd $TOP_DIR/mbp
 git add .gitmodules
 
