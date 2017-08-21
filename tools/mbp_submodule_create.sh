@@ -106,9 +106,11 @@ function create_user_keys_passphrase()
                         *   ) echo -e "\033[31m [NOTE]: Use key Pass Phrase is $fsk !!\033[0m";
 	            	  echo SIGNING_MODEL = \"user\" > conf/UK-PS;
 	            	  echo RPM_FSK_PASSWORD = \"$fsk\" >> conf/UK-PS;
+			  ima_fsk_passphrase="$fsk"
 	            	  if [ X"$rpm_gpg_passphrase" == X"" ]
                               read -p " [Note]: Do you wish to create the RPM GPG KEY passphrase?" gpgk
                               echo RPM_GPG_PASSPHRASE = \"$gpgk\" >> conf/UK-PS;
+			      rpm_gpg_passphrase="$gpgk"
 	            	  else
                               echo RPM_GPG_PASSPHRASE = \"$rpm_gpg_passphrase\" >> conf/UK-PS;
 	                  fi
@@ -123,6 +125,7 @@ function create_user_keys_passphrase()
                     echo -e "\033[31m"
                     read -p " [Note]: Do you wish to create the RPM GPG KEY passphrase?" gpgk
                     echo RPM_GPG_PASSPHRASE = \"$gpgk\" >> conf/UK-PS;
+		    rpm_gpg_passphrase="$gpgk"
                     echo -e "\033[0m"
 	        else
                     echo RPM_GPG_PASSPHRASE = \"$rpm_gpg_passphrase\" >> conf/UK-PS;
@@ -135,6 +138,10 @@ function create_user_keys_passphrase()
     fi
     if [ -f conf/UK-PS ];then
         git add conf/UK-PS
+	if [ X"`cat conf/UK-PS | grep SIGNING_MODEL | grep user`" != X"" ]; then
+	    echo "[Note]: Will create IMA FSK PS:$ima_fsk_passphrase ; RPM GPG PS: $rpm_gpg_passphrase"
+	    ./tools/create-user-key-store.sh -d user-keys -p "$ima_fsk_passphrase" -r "$rpm_gpg_passphrase"
+        fi
     else
 	if [ X"$ENCRYPTO_FLAG" == X"1" ]; then
             echo "[Error]: There is no UK-PS file for the Secure Encrypto Feature!!"
@@ -142,6 +149,9 @@ function create_user_keys_passphrase()
 	else
 	    echo "[Note]: This BSP is not support the Secure Encrypto Feature!!"
 	fi
+    fi
+    if [ -d user-keys ]; then
+	git add user-keys
     fi
     rm -fr scripts
 }
