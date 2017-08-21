@@ -6,6 +6,7 @@ ROOT_DIR="`cd "$_D" && pwd`"
 
 KEYS_DIR="$ROOT_DIR/user-keys"
 pass_phrase="SecureCore"
+rpm_gpg_passphrase=$pass_phrase
 
 function show_help()
 {
@@ -22,8 +23,12 @@ Options:
     Default: `pwd`/user-keys
 
  -p <pass_phrase>
-    Input the user key pass phrase.
+    Input the IMA user key pass phrase.
     Default: "SecureCore"
+
+ -r <pass_phrase>
+    Input the rpm gpg user key pass phrase.
+    Default: "password"
 
  -h|--help
     Show this help information.
@@ -69,6 +74,9 @@ while [ $# -gt 0 ]; do
             ;;
         -p)
             shift && pass_phrase="$1"
+            ;;
+        -r)
+            shift && rpm_gpg_passphrase="$1"
             ;;
         -h|--help)
             show_help `basename $0`
@@ -242,6 +250,7 @@ Key-Length: 2048
 Name-Real: $gpg_key_name
 Name-Comment: RPM Signing Certificate
 Name-Email: $gpg_key_name@foo.com
+Passphrase: $rpm_gpg_passphrase
 Expire-Date: 0
 %pubring $pub_key.pub
 %secring $priv_key.sec
@@ -258,8 +267,9 @@ EOF
 
         print_error "Please type passwd to modify the passphrase, and type quit to exit"
 
-        $gpg --edit-key "$gpg_key_name"
-
+	if [ X"$rpm_gpg_passphrase" == X"" ]; then
+            $gpg --edit-key "$gpg_key_name"
+        fi
         $gpg --export --armor "$gpg_key_name" > "$pub_key"
         $gpg --export-secret-keys --armor "$gpg_key_name" > "$priv_key"
 
