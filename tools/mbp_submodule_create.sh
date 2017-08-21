@@ -107,7 +107,7 @@ function create_user_keys_passphrase()
 	            	  echo SIGNING_MODEL = \"user\" > conf/UK-PS;
 	            	  echo RPM_FSK_PASSWORD = \"$fsk\" >> conf/UK-PS;
 			  ima_fsk_passphrase="$fsk"
-	            	  if [ X"$rpm_gpg_passphrase" == X"" ]
+	            	  if [ X"$rpm_gpg_passphrase" == X"" ]; then
                               read -p " [Note]: Do you wish to create the RPM GPG KEY passphrase?" gpgk
                               echo RPM_GPG_PASSPHRASE = \"$gpgk\" >> conf/UK-PS;
 			      rpm_gpg_passphrase="$gpgk"
@@ -121,7 +121,7 @@ function create_user_keys_passphrase()
 	    else
 		echo SIGNING_MODEL = \"user\" > conf/UK-PS;
 	        echo RPM_FSK_PASSWORD = \"$ima_fsk_passphrase\" >> conf/UK-PS;
-	        if [ X"$rpm_gpg_passphrase" == X"" ]
+	        if [ X"$rpm_gpg_passphrase" == X"" ]; then
                     echo -e "\033[31m"
                     read -p " [Note]: Do you wish to create the RPM GPG KEY passphrase?" gpgk
                     echo RPM_GPG_PASSPHRASE = \"$gpgk\" >> conf/UK-PS;
