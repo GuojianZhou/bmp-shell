@@ -129,31 +129,11 @@ ca_sign() {
                 -out "$key_dir/$key_name.csr"
         else
             # Prompt user to type the password
-	    expect <<- END
-            spawn openssl genrsa -des3 -out "$key_dir/$key_name.key" 2048
-            expect {
-                    "Enter pass phrase for" {send "$pass_phrase\r"}
-                   }
-            sleep 2
-            expect {
-                    "Verifying - Enter pass phrase for" {send "$pass_phrase\r"; puts "Verify sign $pass_phrase OK\n"}
-                   }
-            sleep 1
-            spawn openssl req -new -sha256 \
+            openssl genrsa -des3 -passout pass:$pass_phrase -out "$key_dir/$key_name.key" 2048 
+            openssl req -new -sha256 -passin pass:$pass_phrase \
                 -subj "$subject" \
                 -key "$key_dir/$key_name.key" \
                 -out "$key_dir/$key_name.csr"
-
-            expect {
-                    "Enter pass phrase for" {send "$pass_phrase\r"}
-                   }
-            sleep 1
-            expect {
-                    "Signature ok" {puts "Signature OK\n"}
-                   }
-            sleep 1
-            exit
-END
         fi
 
         local ca_cert="$ca_key_dir/$ca_key_name.crt"
