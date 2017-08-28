@@ -11,21 +11,23 @@ ima_fsk_passphrase=""
 rpm_gpg_passphrase=""
 
 usage() {
-    echo >&2 "usage: ${0##*/} [-b <#branch> ] [-n <#bsp-name>] [-h] [?] "
+    echo >&2 "usage: ${0##*/} [-b <#branch> ] [-n <#bsp-name>] [-i <# IMA FSK user key passphrase>] [-r <#RPM GPG user key passphrase>] [-k <#GPG key name>] [-h] [?] "
     echo >&2 "   -b specifies the branch name."
     echo >&2 "   -n specifies the bsp name."
     echo >&2 "   -i specifies the IMA FSK user key passphrase."
     echo >&2 "   -r specifies the RPM GPG user key passphrase."
+    echo >&2 "   -k specifies the RPM GPG user key name."
     echo >&2 "   -h Print this help menu"
     echo >&2 "   ?  Print this help menu"
 }
 
-while getopts "b:n:i:r:?h" FLAG; do
+while getopts "b:n:i:r:k:?h" FLAG; do
     case $FLAG in
         b)      BRANCH=$OPTARG;;
         n)      BSP_NAME=$OPTARG;;
         i)      ima_fsk_passphrase=$OPTARG;;
         r)      rpm_gpg_passphrase=$OPTARG;;
+        k)      rpm_gpg_key_name=$OPTARG;;
         h)      usage;;
         \?)     usage;;
     esac
@@ -106,7 +108,10 @@ function create_user_keys_passphrase()
 	            	  break;;
                         *   ) echo -e "\033[31m [NOTE]: Use key Pass Phrase is $fsk !!\033[0m";
 	            	  echo SIGNING_MODEL = \"user\" > conf/UK-PS;
-	            	  echo RPM_GPG_NAME = \"USER-$BSP_NAME\" >> conf/UK-PS;
+			  if [ X"$rpm_gpg_key_name" == X"" ];then
+			      rpm_gpg_key_name="USER-$BSP_NAME"
+			  fi
+	            	  echo RPM_GPG_NAME = \"$rpm_gpg_key_name\" >> conf/UK-PS;
 	            	  echo RPM_FSK_PASSWORD = \"$fsk\" >> conf/UK-PS;
 			  ima_fsk_passphrase="$fsk"
 	            	  if [ X"$rpm_gpg_passphrase" == X"" ]; then
@@ -142,8 +147,8 @@ function create_user_keys_passphrase()
     if [ -f conf/UK-PS ];then
         git add conf/UK-PS
 	if [ X"`cat conf/UK-PS | grep SIGNING_MODEL | grep user`" != X"" ]; then
-	    echo "[Note]: Will create IMA FSK PS:$ima_fsk_passphrase ; RPM GPG PS: $rpm_gpg_passphrase"
-	    ./tools/create-user-key-store.sh -d user-keys -p "$ima_fsk_passphrase" -r "$rpm_gpg_passphrase" -n "USER-$BSP_NAME"
+	    echo "[Note]: Will create IMA FSK PS:$ima_fsk_passphrase ; RPM GPG PS: $rpm_gpg_passphrase ; GPG Key name $rpm_gpg_key_name"
+	    ./tools/create-user-key-store.sh -d user-keys -p "$ima_fsk_passphrase" -r "$rpm_gpg_passphrase" -n "$rpm_gpg_key_name"
         fi
     else
 	if [ X"$ENCRYPTO_FLAG" == X"1" ]; then
