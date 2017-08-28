@@ -100,11 +100,13 @@ function create_user_keys_passphrase()
                     case $fsk in
                         [Ss]) echo -e "\033[31m [NOTE]: Use the default Sample Key!\033[0m";
 	            	  echo SIGNING_MODEL = \"sample\" > conf/UK-PS;
-	            	  echo RPM_FSK_PASSWORD = \"password\" >> conf/UK-PS;
-                          echo RPM_GPG_PASSPHRASE = \"SecureCore\" >> conf/UK-PS;
+	            	  echo RPM_GPG_NAME = \"WR-PULSAR-9\" >> conf/UK-PS;
+	            	  echo RPM_FSK_PASSWORD = \"pulsar9\" >> conf/UK-PS;
+                          echo RPM_GPG_PASSPHRASE = \"pulsar9\" >> conf/UK-PS;
 	            	  break;;
                         *   ) echo -e "\033[31m [NOTE]: Use key Pass Phrase is $fsk !!\033[0m";
 	            	  echo SIGNING_MODEL = \"user\" > conf/UK-PS;
+	            	  echo RPM_GPG_NAME = \"USER-$BSP_NAME\" >> conf/UK-PS;
 	            	  echo RPM_FSK_PASSWORD = \"$fsk\" >> conf/UK-PS;
 			  ima_fsk_passphrase="$fsk"
 	            	  if [ X"$rpm_gpg_passphrase" == X"" ]; then
@@ -141,7 +143,7 @@ function create_user_keys_passphrase()
         git add conf/UK-PS
 	if [ X"`cat conf/UK-PS | grep SIGNING_MODEL | grep user`" != X"" ]; then
 	    echo "[Note]: Will create IMA FSK PS:$ima_fsk_passphrase ; RPM GPG PS: $rpm_gpg_passphrase"
-	    ./tools/create-user-key-store.sh -d user-keys -p "$ima_fsk_passphrase" -r "$rpm_gpg_passphrase"
+	    ./tools/create-user-key-store.sh -d user-keys -p "$ima_fsk_passphrase" -r "$rpm_gpg_passphrase" -n "USER-$BSP_NAME"
         fi
     else
 	if [ X"$ENCRYPTO_FLAG" == X"1" ]; then

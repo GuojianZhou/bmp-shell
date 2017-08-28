@@ -5,8 +5,9 @@ _D=`dirname "$_S"`
 ROOT_DIR="`cd "$_D" && pwd`"
 
 KEYS_DIR="$ROOT_DIR/user-keys"
-pass_phrase="SecureCore"
-rpm_gpg_passphrase=$pass_phrase
+pass_phrase="pulsar9"
+rpm_gpg_passphrase="pulsar9"
+rpm_gpg_key_name="WR-PULSAR-9"
 
 function show_help()
 {
@@ -24,11 +25,15 @@ Options:
 
  -p <pass_phrase>
     Input the IMA user key pass phrase.
-    Default: "SecureCore"
+    Default: "pulsar9"
 
  -r <pass_phrase>
     Input the rpm gpg user key pass phrase.
-    Default: "password"
+    Default: "pulsar9"
+
+ -n <gpg key name>
+    Input the rpm gpg user key name.
+    Default: "WR-PULSAR-9"
 
  -h|--help
     Show this help information.
@@ -77,6 +82,9 @@ while [ $# -gt 0 ]; do
             ;;
         -r)
             shift && rpm_gpg_passphrase="$1"
+            ;;
+        -n)
+            shift && rpm_gpg_key_name="$1"
             ;;
         -h|--help)
             show_help `basename $0`
@@ -207,7 +215,7 @@ create_rpm_user_key() {
 
     [ ! -d "$key_dir" ] && mkdir -m 0700 -p "$key_dir"
 
-    local gpg_key_name="SecureCore"
+    local gpg_key_name="$rpm_gpg_key_name"
     local priv_key="$key_dir/RPM-GPG-PRIVKEY-$gpg_key_name"
     local pub_key="$key_dir/RPM-GPG-KEY-$gpg_key_name"
 
