@@ -1,4 +1,4 @@
-From 5ded2283ffbd4ec70c6ac401b3f264aa554a58ad Mon Sep 17 00:00:00 2001
+From 47f26b5486b8bc9fe646489973c1f6b439e2d4d8 Mon Sep 17 00:00:00 2001
 From: fli <fupan.li@windriver.com>
 Date: Sat, 21 Jan 2017 19:28:37 -0800
 Subject: [PATCH] bitbake: add a trigger to disable the dependency on other
@@ -17,7 +17,7 @@ Signed-off-by: fli <fupan.li@windriver.com>
  2 files changed, 21 insertions(+)
 
 diff --git a/lib/bb/runqueue.py b/lib/bb/runqueue.py
-index e1a15af2..521c6c27 100644
+index e1a15af..521c6c2 100644
 --- a/lib/bb/runqueue.py
 +++ b/lib/bb/runqueue.py
 @@ -1239,6 +1239,8 @@ class RunQueue:
@@ -30,7 +30,7 @@ index e1a15af2..521c6c27 100644
                  stampfile3 = bb.build.stampfile(taskname2 + "_setscene", self.rqdata.dataCaches[mc2], taskfn2)
                  t2 = get_timestamp(stampfile2)
 diff --git a/lib/bb/siggen.py b/lib/bb/siggen.py
-index f71190ad..726d5bff 100644
+index 4380760..484d64b 100644
 --- a/lib/bb/siggen.py
 +++ b/lib/bb/siggen.py
 @@ -84,6 +84,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
@@ -52,10 +52,10 @@ index f71190ad..726d5bff 100644
 +        else:
 +            self.dwl = None
 +
-     def init_rundepcheck(self, data):
-         self.taskwhitelist = data.getVar("BB_HASHTASK_WHITELIST") or None
-         if self.taskwhitelist:
-@@ -200,6 +208,17 @@ class SignatureGeneratorBasic(SignatureGenerator):
+     def reset(self, data):
+         self.__init__(data)
+ 
+@@ -203,6 +211,17 @@ class SignatureGeneratorBasic(SignatureGenerator):
              depname = dataCache.pkg_fn[self.pkgnameextract.search(dep).group('fn')]
              if not self.rundep_check(fn, recipename, task, dep, depname, dataCache):
                  continue
@@ -74,5 +74,5 @@ index f71190ad..726d5bff 100644
                  bb.fatal("%s is not in taskhash, caller isn't calling in dependency order?", dep)
              data = data + self.taskhash[dep]
 -- 
-2.11.0
+2.7.4
 
