@@ -35,6 +35,9 @@ done
 
 shift $((OPTIND - 1))
 
+if [ X"$rpm_gpg_key_name" == X"" ];then
+    rpm_gpg_key_name="USER-$BSP_NAME"
+fi
 
 function prepare_create_git()
 {
@@ -108,9 +111,6 @@ function create_user_keys_passphrase()
 	            	  break;;
                         *   ) echo -e "\033[31m [NOTE]: Use key Pass Phrase is $fsk !!\033[0m";
 	            	  echo SIGNING_MODEL = \"user\" > conf/UK-PS;
-			  if [ X"$rpm_gpg_key_name" == X"" ];then
-			      rpm_gpg_key_name="USER-$BSP_NAME"
-			  fi
 	            	  echo RPM_GPG_NAME = \"$rpm_gpg_key_name\" >> conf/UK-PS;
 	            	  echo RPM_FSK_PASSWORD = \"$fsk\" >> conf/UK-PS;
 			  ima_fsk_passphrase="$fsk"
@@ -128,6 +128,7 @@ function create_user_keys_passphrase()
                 done
 	    else
 		echo SIGNING_MODEL = \"user\" > conf/UK-PS;
+	        echo RPM_GPG_NAME = \"$rpm_gpg_key_name\" >> conf/UK-PS;
 	        echo RPM_FSK_PASSWORD = \"$ima_fsk_passphrase\" >> conf/UK-PS;
 	        if [ X"$rpm_gpg_passphrase" == X"" ]; then
                     echo -e "\033[31m"
