@@ -36,7 +36,11 @@ done
 shift $((OPTIND - 1))
 
 if [ X"$rpm_gpg_key_name" == X"" ];then
-    rpm_gpg_key_name="USER-$BSP_NAME"
+    if [ X"$BSP_NAME" != X"" ];then
+        rpm_gpg_key_name="USER-$BSP_NAME"
+    else
+        rpm_gpg_key_name="USER-$BSP_NAME_DEFAULT"
+    fi
 fi
 
 function prepare_create_git()
