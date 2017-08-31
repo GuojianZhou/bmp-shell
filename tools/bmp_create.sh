@@ -5,8 +5,7 @@ TOP_DIR=`pwd`
 BSP_NAME_DEFAULT=`basename $TOP_DIR`
 BSP_NAME=""
 BRANCH="master"
-MBP_SCRIPTS_URL="git://pek-lpdfs01.wrs.com/managed_builds/Pulsar/MBP/New/mbp-scripts.git"
-SMARTPM_SECURE_URL="git://pek-lpdfs01.wrs.com/managed_builds/Pulsar/SRC/Pulsar8/meta-smartpm-secure"
+BMP_SCRIPTS_URL="https://github.com/GuojianZhou/bmp-core"
 ima_fsk_passphrase=""
 rpm_gpg_passphrase=""
 
@@ -46,7 +45,7 @@ fi
 function prepare_create_git()
 {
     if [ X"$BSP_NAME" != X"$BSP_NAME_DEFAULT" ]; then
-        echo "Create the whole MBP in $BSP_NAME directory!"
+        echo "Create the whole BMP in $BSP_NAME directory!"
         if [ -d $BSP_NAME ]; then
             echo "$BSP_NAME directory exist!"
             mv $BSP_NAME $BSP_NAME.bak
@@ -55,23 +54,23 @@ function prepare_create_git()
             mkdir $BSP_NAME
         fi
     fi
-    cd $TOP_DIR/mbp
-    MBP_URL="`git remote get-url origin`"
+    cd $TOP_DIR/bmp
+    BMP_URL="`git remote get-url origin`"
     cd $TOP_DIR/$BSP_NAME
-    git clone $MBP_URL
+    git clone $BMP_URL
 }
 
 function clone_extern_git()
 {
     echo "clone_extern_git"
-    #git clone ../mbp
-    #git clone --bare git://pek-lpdfs01.wrs.com/managed_builds/Pulsar/MBP/New/mbp-scripts.git scripts
+    #git clone ../bmp
+    #git clone --bare git://pek-lpdfs01.wrs.com/managed_builds/Pulsar/bmp/New/bmp-scripts.git scripts
 }
 
 function create_default_conf_link()
 {
-    cd $TOP_DIR/mbp
-    git clone $MBP_SCRIPTS_URL scripts
+    cd $TOP_DIR/bmp
+    git clone $BMP_SCRIPTS_URL scripts
     if [ -f scripts/conf/default.conf.$BSP_NAME ]; then
         if [ ! -f conf/default.conf ]; then
             if [ ! -d conf ]; then
@@ -94,13 +93,13 @@ function create_default_conf_link()
 
 function create_user_keys_passphrase()
 {
-    cd $TOP_DIR/mbp
-    git clone $MBP_SCRIPTS_URL scripts
+    cd $TOP_DIR/bmp
+    git clone $BMP_SCRIPTS_URL scripts
     if [ -f conf/default.conf ]; then
 	ENCRYPTO_FLAG=`grep ENCRYPTO_FLAG conf/default.conf | awk -F= '{print $2}'`
     fi
     if [ X"$ENCRYPTO_FLAG" == X"1" ]; then
-	echo "[Note]: mbp will create the user keys pass phrase!"
+	echo "[Note]: bmp will create the user keys pass phrase!"
         if [ ! -f conf/UK-PS ]; then
 	    if [ X"$ima_fsk_passphrase" == X"" ]; then
                 while true; do
@@ -109,9 +108,9 @@ function create_user_keys_passphrase()
                     case $fsk in
                         [Ss]) echo -e "\033[31m [NOTE]: Use the default Sample Key!\033[0m";
 	            	  echo SIGNING_MODEL = \"sample\" > conf/UK-PS;
-	            	  echo RPM_GPG_NAME = \"WR-PULSAR-9\" >> conf/UK-PS;
-	            	  echo RPM_FSK_PASSWORD = \"pulsar9\" >> conf/UK-PS;
-                          echo RPM_GPG_PASSPHRASE = \"pulsar9\" >> conf/UK-PS;
+	            	  echo RPM_GPG_NAME = \"SecureCore\" >> conf/UK-PS;
+	            	  echo RPM_FSK_PASSWORD = \"password\" >> conf/UK-PS;
+                          echo RPM_GPG_PASSPHRASE = \"SecureCore\" >> conf/UK-PS;
 	            	  break;;
                         *   ) echo -e "\033[31m [NOTE]: Use key Pass Phrase is $fsk !!\033[0m";
 	            	  echo SIGNING_MODEL = \"user\" > conf/UK-PS;
@@ -198,7 +197,7 @@ bare_git_init_create ()
 
 submodule_git()
 {
-    cd $TOP_DIR/mbp
+    cd $TOP_DIR/bmp
     git remote set-url origin $PWD
     git submodule init
     for each in buildhistory deploy sstate-cache tmp prdb downloads src; do
@@ -210,11 +209,8 @@ submodule_git()
     #echo "sed -i 's/$BSP_NAME\///g' .gitmodules"
     #sed -i "s/${BSP_NAME}\///g" .gitmodules
     #cat .gitmodules
-    git submodule add $MBP_SCRIPTS_URL scripts
+    git submodule add $BMP_SCRIPTS_URL scripts
     rm -fr scripts
-    #P9 will not support smartpm, so remove this layer from mbp
-    #git submodule add $SMARTPM_SECURE_URL meta-smartpm-secure
-    #rm -fr meta-smartpm-secure
 }
 
 if [ X"$BSP_NAME" != X"" -a X"$BSP_NAME" != X"$BSP_NAME_DEFAULT" ];then
@@ -234,10 +230,10 @@ bare_git_init_create
 submodule_git
 create_default_conf_link
 create_user_keys_passphrase
-cd $TOP_DIR/mbp
+cd $TOP_DIR/bmp
 git add .gitmodules
 
-git commit -s -m "mbp: $BSP_NAME submodules Initial Commit"
+git commit -s -m "bmp: $BSP_NAME submodules Initial Commit"
 
 cd ..
-git clone --bare mbp
+git clone --bare bmp
